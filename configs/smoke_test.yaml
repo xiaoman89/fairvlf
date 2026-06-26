@@ -1,0 +1,73 @@
+# ==========================================================================
+# FairVLF — SMOKE TEST config
+# Purpose: verify the whole pipeline runs end-to-end on a tiny subset.
+# This is NOT a real training run. It uses a few hundred images, a handful of
+# steps, and tiny batch sizes, just to confirm the code is wired correctly.
+# ==========================================================================
+
+run_name: smoke_test
+
+# --- Data ---
+data:
+  # Path to the manifest CSV listing images + labels (see docs/DATA.md).
+  # On AutoDL this will be an absolute path under /root/autodl-tmp/.
+  manifest_path: data/manifest_smoke.csv
+  # Root directory the manifest's relative image paths are joined against.
+  image_root: data/images
+  # How many demographic group cells (FairFace: 7 race x 2 gender = 14).
+  num_groups: 14
+  image_size: 224
+
+# --- Backbone ---
+model:
+  # HuggingFace model id. Smoke test can use a smaller VLM to run fast;
+  # the full config uses Qwen2.5-VL-7B-Instruct.
+  backbone: Qwen/Qwen2.5-VL-7B-Instruct
+  # LoRA settings (light fine-tuning).
+  lora:
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj]
+  # Token strings the model scores. real/fake are single tokens.
+  label_tokens:
+    real: "real"
+    fake: "fake"
+  # Learnable affine calibration on the raw fake score (absorbs token bias).
+  calibrate_score: true
+
+# --- Prompts ---
+prompts:
+  # Forensic Prompt Ensemble (detection backbone component).
+  forensic:
+    - "Focus on texture artifacts and skin details."
+    - "Focus on facial geometry and symmetry."
+    - "Focus on lighting, shadows, and reflections."
+    - "Focus on background-face consistency."
+    - "Overall real vs fake decision."
+  # Demographic Prompt Consistency variants.
+  neutral: "Is this face image real or fake?"
+  fair: "Is this face image real or fake? Do not rely on race, gender, age, skin tone, hairstyle, or identity."
+  # attr template; {demographic} filled from the real FairFace label at runtime.
+  attr: "This image contains a {demographic}. Is this face image real or fake?"
+
+# --- Loss weights ---
+loss:
+  lambda_dpc: 0.5      # weight on Demographic Prompt Consistency
+  lambda_dsa: 0.5      # weight on Distributional Score Alignment
+  dpc_epsilon: 0.1     # margin tolerance for DPC
+  mmd_bandwidth: median  # 'median' heuristic or a float
+
+# --- Training (tiny, for smoke test only) ---
+train:
+  batch_size: 2
+  grad_accum: 1
+  max_steps: 20        # just enough to confirm loss is computed and decreases
+  lr: 1.0e-4
+  weight_decay: 0.0
+  warmup_steps: 0
+  log_every: 1
+  save_every: 0        # don't bother saving checkpoints in smoke test
+  seed: 42
+  device: cuda
+  precision: bf16

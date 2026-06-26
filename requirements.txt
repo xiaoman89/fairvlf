@@ -1,0 +1,28 @@
+# FairVLF dependencies
+# Tested with Python 3.10+. On AutoDL, install with the Tsinghua mirror:
+#   pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# --- Core deep learning (PyTorch is pre-installed on AutoDL images;
+#     do NOT reinstall torch there or you may break CUDA. Listed for local use.) ---
+# torch>=2.1
+# torchvision>=0.16
+
+# --- Vision-language backbone + LoRA ---
+transformers>=4.49.0
+peft>=0.13.0
+accelerate>=0.34.0
+safetensors>=0.4.0
+sentencepiece>=0.2.0
+qwen-vl-utils>=0.0.8
+
+# --- Data and image handling ---
+pandas>=2.0
+numpy>=1.24
+pillow>=10.0
+opencv-python>=4.8
+
+# --- Config, logging, metrics ---
+pyyaml>=6.0
+scikit-learn>=1.3
+tensorboard>=2.15
+tqdm>=4.66

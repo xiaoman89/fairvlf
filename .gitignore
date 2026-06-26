@@ -1,0 +1,63 @@
+# ==========================================================================
+# FairVLF .gitignore
+# Principle: code + configs + logs are tracked; data + checkpoints + secrets
+# are NOT. This keeps the public repo small and license-clean.
+# ==========================================================================
+
+# --- Data (FairFrontier images, manifests with absolute paths) ---
+data/
+datasets/
+*.png
+*.jpg
+*.jpeg
+*.webp
+# (keep small illustrative figures in docs/ by force-adding them:
+#  git add -f docs/figures/some_figure.png)
+
+# --- Model checkpoints and large artifacts ---
+runs/
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+lora_weights/
+
+# --- Secrets and tokens (NEVER commit these) ---
+.env
+*.token
+hf_token*
+*_secret*
+.huggingface/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# --- Logs and temp ---
+*.log
+wandb/
+tensorboard/
+tmp/
+.DS_Store
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+
+# ==========================================================================
+# Exceptions: things we DO want tracked even though they match patterns above
+# ==========================================================================
+!configs/*.yaml
+!docs/**/*.md
+!requirements.txt

@@ -1,0 +1,67 @@
+# ==========================================================================
+# FairVLF — DEFAULT (full-scale) training config
+# Use this only after smoke_test.yaml passes. Hyperparameters here are
+# starting points; sweep lambda_dpc / lambda_dsa / dpc_epsilon for the paper's
+# ablation tables.
+# ==========================================================================
+
+run_name: fairvlf_full
+
+data:
+  manifest_path: data/manifest_train.csv
+  image_root: data/images
+  num_groups: 14
+  image_size: 224
+  # Which split protocol: 'standard' (Split A) or 'leave_one_generator_out' (Split B).
+  split: standard
+  # For Split B: the generator held out for testing.
+  held_out_generator: null
+
+model:
+  backbone: Qwen/Qwen2.5-VL-7B-Instruct
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj]
+  label_tokens:
+    real: "real"
+    fake: "fake"
+  calibrate_score: true
+
+prompts:
+  forensic:
+    - "Focus on texture artifacts and skin details."
+    - "Focus on facial geometry and symmetry."
+    - "Focus on lighting, shadows, and reflections."
+    - "Focus on background-face consistency."
+    - "Overall real vs fake decision."
+  neutral: "Is this face image real or fake?"
+  fair: "Is this face image real or fake? Do not rely on race, gender, age, skin tone, hairstyle, or identity."
+  attr: "This image contains a {demographic}. Is this face image real or fake?"
+
+loss:
+  lambda_dpc: 0.5
+  lambda_dsa: 0.5
+  dpc_epsilon: 0.1
+  mmd_bandwidth: median
+
+train:
+  batch_size: 8
+  grad_accum: 4
+  max_steps: 5000
+  lr: 1.0e-4
+  weight_decay: 0.0
+  warmup_steps: 100
+  log_every: 10
+  save_every: 500
+  seed: 42
+  device: cuda
+  precision: bf16
+
+# --- Ablation switch ---
+# Set any of these to false to run the controlled ablation
+# (same backbone, same data, only the loss terms change).
+ablation:
+  use_dpc: true
+  use_dsa: true
