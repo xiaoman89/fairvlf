@@ -72,6 +72,9 @@ def main():
 
     while step < max_steps:
         for batch in loader:
+            # Move tensor fields in the batch to the model's device.
+            for k in ("labels", "groups", "generators"):
+                batch[k] = batch[k].to(device)
             outputs = model(batch)
             loss, comps = combined_loss(outputs, batch, cfg)
             (loss / accum).backward()
@@ -92,6 +95,10 @@ def main():
             save_every = cfg["train"]["save_every"]
             if save_every and step > 0 and step % save_every == 0:
                 _save_checkpoint(model, run_dir, step, logger)
+
+            # Free per-step cached GPU memory to avoid accumulation.
+            del outputs, loss
+            torch.cuda.empty_cache()
 
             step += 1
             if step >= max_steps:

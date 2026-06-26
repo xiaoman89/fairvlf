@@ -42,12 +42,13 @@ class FairVLFModel(nn.Module):
     def load(self):
         """Load backbone + processor and attach LoRA. Imported lazily so the
         rest of the package can be imported without heavy deps installed."""
-        from transformers import AutoProcessor, AutoModelForVision2Seq
+        from transformers import AutoProcessor
         from peft import LoraConfig, get_peft_model
 
         name = self.cfg["model"]["backbone"]
         self.processor = AutoProcessor.from_pretrained(name, trust_remote_code=True)
-        self.backbone = AutoModelForVision2Seq.from_pretrained(
+        model_cls = _resolve_vlm_class()
+        self.backbone = model_cls.from_pretrained(
             name, torch_dtype=torch.bfloat16, trust_remote_code=True,
         )
 
@@ -134,6 +135,22 @@ class FairVLFModel(nn.Module):
             "score_neutral": score_neutral,
             "score_variants": score_variants,
         }
+
+
+def _resolve_vlm_class():
+    """Return a usable vision-language model class across transformers versions."""
+    import transformers
+    candidates = [
+        "Qwen2_5_VLForConditionalGeneration",
+        "Qwen2VLForConditionalGeneration",
+        "AutoModelForImageTextToText",
+        "AutoModelForVision2Seq",
+    ]
+    for name in candidates:
+        cls = getattr(transformers, name, None)
+        if cls is not None:
+            return cls
+    raise ImportError("No compatible VLM class found. Tried: " + ", ".join(candidates))
 
 
 def _single_token_id(tokenizer, word: str) -> int:
