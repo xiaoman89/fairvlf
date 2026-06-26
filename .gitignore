@@ -5,7 +5,7 @@
 # ==========================================================================
 
 # --- Data (FairFrontier images, manifests with absolute paths) ---
-data/
+/data/
 datasets/
 *.png
 *.jpg
